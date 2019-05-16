@@ -157,6 +157,7 @@ def key_press_handler_custom(event, canvas):
         key_press_handler(event, canvas, canvas.manager.toolbar)
 
 
+
 def on_figure_window_close(figure, function):
     """Connects a close figure signal to a given function.
 
