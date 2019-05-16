@@ -232,6 +232,132 @@ def subplot_parameters(fig):
     bottom = fig.subplotpars.bottom
     return left, bottom, right, top, wspace, hspace
 
+def merge_color_channels(im_list, color_list=None,
+                         normalization='single', plot=True,
+                         legend=None):
+    """
+    Merge up to six gray scale images into a color composite.
+
+    Parameters
+    ----------
+    im_list : list of Signal2D instances (images) to be merged
+    color_list : list of strings
+        Should be valid matplotlib color strings, such as 'red', 'green',
+        'blue, etc.
+    normalization : str
+        Either 'single' or 'global'; controls whether the color scales are
+        normalized on a per-image basis (``'single'``), or globally over all
+        images (``'global'``)
+    plot : bool
+        Controls plotting output. If True (default), the method will plot the
+        results of the merged images in addition to returning the merged RGB
+        matrix; if False, the method will silently return the RGB matrix
+        without plotting.
+    legend : None or list of str
+        Legend for each color to include in the plotted output. Should be one
+        string for each image in ``im_list``
+
+    Returns
+    -------
+    array: RGB matrix
+        A numpy array (same width and height as images) with three channels
+        containing the merged RGB data
+
+    """
+    # TODO: Can itertools.cycle be used here to remove the 6 image limit?
+    color_cycle = ['red', 'green', 'blue', 'cyan', 'yellow', 'magenta']
+    if len(im_list) > 6:
+        raise ValueError('List must be at most 6 images long')
+    if color_list is None:
+        color_list = color_cycle[0:len(im_list)]
+    if not all(x in color_cycle for x in color_list):
+        raise ValueError("Invalid color. Only red, green, blue, cyan, yellow "
+                         "and magenta allowed")
+
+    # shapes is (N, 2) numpy array containing the height and width of each image
+    shapes = np.asarray([im.data.shape[:2] for im in im_list])
+    # Compare all rows of shapes to first row, and check if all rows in each
+    # column are identical
+    isequal = np.all(shapes == shapes[0, :], axis=0)
+    # isequal should be [True, True], if it's not, raise an error:
+    if not np.all(isequal):
+        raise ValueError("All images must be the same shape to build "
+                         "composite. Image shapes were: \n{}".format(shapes))
+    height, width = shapes[0, :]
+
+    images = dict()
+    images['rgb'] = np.zeros([height, width, 3])
+    for i in color_list:
+        images[i] = np.zeros([height, width, 3])
+
+    def _normalize_channels(im_list, color_list, method, iter_number):
+        # determine normalization denominator
+        if method == 'single':
+            norm_value = im_list[iter_number].data.max()
+        elif method == 'global':
+            maxvals = np.zeros(len(im_list))
+            for im_num in range(0, len(im_list)):
+                maxvals[im_num] = im_list[im_num].data.max()
+            maxval = maxvals.max()
+            norm_value = maxval
+        else:
+            raise ValueError("Unknown normalization method."
+                             "Must be 'single' or 'global'.")
+
+        if color_list[iter_number] == 'red':
+            images['red'][:, :, 0] = \
+                im_list[iter_number].data / norm_value  # red channel
+        elif color_list[iter_number] == 'green':
+            images['green'][:, :, 1] = \
+                im_list[iter_number].data / norm_value  # green channel
+        elif color_list[iter_number] == 'blue':
+            images['blue'][:, :, 2] = \
+                im_list[iter_number].data / norm_value  # blue channel
+        elif color_list[iter_number] == 'yellow':
+            images['yellow'][:, :, 0] = \
+                im_list[iter_number].data / norm_value  # red channel +
+            images['yellow'][:, :, 1] = \
+                im_list[iter_number].data / norm_value  # green channel
+        elif color_list[iter_number] == 'magenta':
+            images['magenta'][:, :, 0] = \
+                im_list[iter_number].data / norm_value  # red channel +
+            images['magenta'][:, :, 2] = \
+                im_list[iter_number].data / norm_value  # blue channel
+        elif color_list[iter_number] == 'cyan':
+            images['cyan'][:, :, 1] = \
+                im_list[iter_number].data / norm_value  # green channel +
+            images['cyan'][:, :, 2] = \
+                im_list[iter_number].data / norm_value  # blue channel
+        else:
+            raise ValueError("Unknown color. Must be red, green, blue, "
+                             "yellow, magenta, or cyan.")
+
+    # TODO: check how ImageJ does this (it's probably the same)
+    #  https://imagej.nih.gov/ij/developer/source/ij/plugin/RGBStackMerge.java.html
+    #  ImageJ also includes a grayscale image
+    for i in range(0, len(im_list)):
+        # TODO: move normalization into function
+        _normalize_channels(im_list, color_list, normalization, i)
+
+    for i in color_list:
+        images['rgb'] += images[i]
+
+    if plot:
+        figure = plt.figure()
+        ax = figure.add_subplot(111)
+        ax.frameon = False
+        ax.set_axis_off()
+        ax.imshow(images['rgb'], interpolation='nearest')
+
+        if legend is not None:
+            # TODO: add a legend capability (as you'd have with elemental maps,
+            #  for instance)
+            pass
+
+        figure.canvas.draw_idle()
+        return figure, images
+    else:
+        return images
 
 class ColorCycle:
     _color_cycle = [mpl.colors.colorConverter.to_rgba(color) for color
