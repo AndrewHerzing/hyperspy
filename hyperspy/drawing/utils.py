@@ -267,8 +267,8 @@ def merge_color_channels(im_list, color_list=None,
     """
     # TODO: Can itertools.cycle be used here to remove the 6 image limit?
     color_cycle = ['red', 'green', 'blue', 'cyan', 'yellow', 'magenta', 'gray']
-    if len(im_list) > 6:
-        raise ValueError('List must be at most 6 images long')
+    if len(im_list) > 7:
+        raise ValueError('List must be at most 7 images long')
     if color_list is None:
         color_list = color_cycle[0:len(im_list)]
     if not all(x in color_cycle for x in color_list):
