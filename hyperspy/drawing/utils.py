@@ -266,14 +266,14 @@ def merge_color_channels(im_list, color_list=None,
 
     """
     # TODO: Can itertools.cycle be used here to remove the 6 image limit?
-    color_cycle = ['red', 'green', 'blue', 'cyan', 'yellow', 'magenta']
+    color_cycle = ['red', 'green', 'blue', 'cyan', 'yellow', 'magenta', 'gray']
     if len(im_list) > 6:
         raise ValueError('List must be at most 6 images long')
     if color_list is None:
         color_list = color_cycle[0:len(im_list)]
     if not all(x in color_cycle for x in color_list):
         raise ValueError("Invalid color. Only red, green, blue, cyan, yellow "
-                         "and magenta allowed")
+                         "magenta and gray allowed")
 
     # shapes is (N, 2) numpy array containing the height and width of each image
     shapes = np.asarray([im.data.shape[:2] for im in im_list])
@@ -329,9 +329,16 @@ def merge_color_channels(im_list, color_list=None,
                 im_list[iter_number].data / norm_value  # green channel +
             images['cyan'][:, :, 2] = \
                 im_list[iter_number].data / norm_value  # blue channel
+        elif color_list[iter_number] == 'gray':
+            images['gray'][:, :, 0] = \
+                im_list[iter_number].data / norm_value / 2 # red channel +
+            images['gray'][:, :, 1] = \
+                im_list[iter_number].data / norm_value / 2  # green channel +
+            images['gray'][:, :, 2] = \
+                im_list[iter_number].data / norm_value / 2  # blue channel
         else:
             raise ValueError("Unknown color. Must be red, green, blue, "
-                             "yellow, magenta, or cyan.")
+                             "yellow, magenta, cyan, or gray.")
 
     # TODO: check how ImageJ does this (it's probably the same)
     #  https://imagej.nih.gov/ij/developer/source/ij/plugin/RGBStackMerge.java.html
