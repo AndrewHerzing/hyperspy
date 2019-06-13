@@ -33,7 +33,6 @@ except BaseException:
 from hyperspy.misc.machine_learning import import_sklearn
 import hyperspy.misc.io.tools as io_tools
 from hyperspy.learn.svd_pca import svd_pca
-from hyperspy.learn.mcr import mcrals
 from hyperspy.learn.mlpca import mlpca
 from hyperspy.learn.rpca import rpca_godec, orpca
 from scipy import linalg
