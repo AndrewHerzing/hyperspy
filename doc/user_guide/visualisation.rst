@@ -1265,6 +1265,6 @@ following list: red, green, blue, magenta, yellow, cyan, and gray.
                                   loadings.inav[2]],
                                 color_list=['blue','red','green'])
 
-    .. figure::  images/core_shell_color_overlay.png
+.. figure::  images/core_shell_color_overlay.png
   :align:   center
   :width:   100%
