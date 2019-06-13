@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.backend_bases import key_press_handler
+from matplotlib.offsetbox import TextArea, VPacker, AnnotationBbox
 import warnings
 import numpy as np
 from distutils.version import LooseVersion
@@ -349,19 +350,31 @@ def merge_color_channels(im_list, color_list=None,
     images['rgb'] = np.int32(images['rgb'] * (255 / images['rgb'].max()))
 
     if plot:
-        figure = plt.figure()
-        ax = figure.add_subplot(111)
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
         ax.frameon = False
         ax.set_axis_off()
         ax.imshow(images['rgb'], interpolation='nearest')
 
         if legend is not None:
-            # TODO: add a legend capability (as you'd have with elemental maps,
+            # DONE: add a legend capability (as you'd have with elemental maps,
             #  for instance)
-            pass
+            # TODO: make legend placement more flexible for varying
+            # label length
+            text = []
+            for l, c in zip(legend, color_list):
+                text.append(TextArea(l, textprops=dict(color=c)))
+            text_vbox = VPacker(children=text, pad=1, sep=5)
+            annotation = AnnotationBbox(text_vbox, (0.85, 0.1),
+                                        xycoords=ax.transAxes,
+                                        box_alignment=(0, 0),
+                                        bboxprops=dict(boxstyle='round',
+                                                       color='white'))
+            annotation.set_figure(fig)
+            fig.artists.append(annotation)
 
-        figure.canvas.draw_idle()
-        return figure, images
+        fig.canvas.draw_idle()
+        return fig, images
     else:
         return images
 
