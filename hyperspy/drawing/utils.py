@@ -338,15 +338,15 @@ def merge_color_channels(im_list, color_list=None,
             raise ValueError("Unknown color. Must be red, green, blue, "
                              "yellow, magenta, cyan, or gray.")
 
-    # TODO: check how ImageJ does this (it's probably the same)
-    #  https://imagej.nih.gov/ij/developer/source/ij/plugin/RGBStackMerge.java.html
-    #  ImageJ also includes a grayscale image
     for i in range(0, len(im_list)):
-        # TODO: move normalization into function
+        # DONE: move normalization into function
         _normalize_channels(im_list, color_list, normalization, i)
 
+    # Scale RGB images between 0 and 255 and convert to int32 to avoid
+    # matplotlib warning
     for i in color_list:
         images['rgb'] += images[i]
+    images['rgb'] = np.int32(images['rgb'] * (255 / images['rgb'].max()))
 
     if plot:
         figure = plt.figure()
