@@ -361,6 +361,10 @@ def merge_color_channels(im_list, color_list=None,
             #  for instance)
             # TODO: make legend placement more flexible for varying
             # label length
+            if len(legend) != len(im_list):
+                raise ValueError("Number of legend labels (%s) is not the same "
+                                 "as the number of images (%s)"
+                                 % (len(legend), len(im_list)))
             text = []
             for l, c in zip(legend, color_list):
                 text.append(TextArea(l, textprops=dict(color=c)))
