@@ -229,13 +229,13 @@ def mcrals(self,
             fitmcr.fit(data, ST=rot_factors.T, verbose=False)
         _logger.info(f"PyMCR result: {f.getvalue()}")
 
-        if self.learning_results.poissonian_noise_normalized is True:
-            loadings_out = (fitmcr.C_opt_.T * im_weight_vec).T
-            factors_out = (fitmcr.ST_opt_ * spec_weight_vec).T
-            data = (data.T * im_weight_vec).T * spec_weight_vec
-        else:
-            loadings_out = fitmcr.C_opt_
-            factors_out = fitmcr.ST_opt_.T
+        # if self.learning_results.poissonian_noise_normalized is True:
+        #     loadings_out = (fitmcr.C_opt_.T * im_weight_vec).T
+        #     factors_out = (fitmcr.ST_opt_ * spec_weight_vec).T
+        #     data = (data.T * im_weight_vec).T * spec_weight_vec
+        # else:
+        loadings_out = fitmcr.C_opt_
+        factors_out = fitmcr.ST_opt_.T
 
     else:
         raise ValueError(f"'simplicity' must be either 'spatial' or"
