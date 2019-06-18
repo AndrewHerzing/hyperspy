@@ -198,7 +198,7 @@ def mcrals(self,
         if self.learning_results.poissonian_noise_normalized is True:
             loadings_out = (fitmcr.ST_opt_ * im_weight_vec).T
             factors_out = (fitmcr.C_opt_.T * spec_weight_vec).T
-            data = (data.T * im_weight_vec).T / spec_weight_vec
+            data = (data.T * im_weight_vec).T * spec_weight_vec
         else:
             loadings_out = fitmcr.ST_opt_.T
             factors_out = fitmcr.C_opt_
@@ -232,7 +232,7 @@ def mcrals(self,
         if self.learning_results.poissonian_noise_normalized is True:
             loadings_out = (fitmcr.C_opt_.T * im_weight_vec).T
             factors_out = (fitmcr.ST_opt_ * spec_weight_vec).T
-            data = (data.T * im_weight_vec).T / spec_weight_vec
+            data = (data.T * im_weight_vec).T * spec_weight_vec
         else:
             loadings_out = fitmcr.C_opt_
             factors_out = fitmcr.ST_opt_.T
