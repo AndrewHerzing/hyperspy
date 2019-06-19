@@ -1246,7 +1246,7 @@ Permanent markers are stored in the HDF5 file if the signal is saved:
     └── point = <hyperspy.drawing._markers.point.Point object at 0x7efcfadb06d8>
 
 Color Overlays
-=======
+==============
 
 A utility function is provided to produce a color overlay image of of several
 signals. This can be especially useful for displaying the distribution of
@@ -1265,6 +1265,26 @@ following list: red, green, blue, magenta, yellow, cyan, and gray.
                                   loadings.inav[2]],
                                 color_list=['blue','red','green'])
 
-.. figure::  images/core_shell_color_overlay.png
+.. figure::  images/color_overlay_only.png
+  :align:   center
+  :width:   100%
+
+Alternatively, by setting the `return_all_channels` argument to True, a
+dictionary with the color composite and each individual channel is returned.
+
+.. code-block:: python
+
+    >>> si_EDS = hs.load("core_shell.hdf5")
+    >>> si_EDS.change_dtype('float')
+    >>> si_EDS.decomposition(True, algorithm='nmf', output_dimension=3)
+    >>> loadings = si_EDS.get_decomposition_loadings()
+    >>> composite = merge_color_channels([loadings.inav[0],
+                                  loadings.inav[1],
+                                  loadings.inav[2]],
+                                color_list=['blue','red','green'],
+                                return_all_channels=True)
+    >>> hs.plot.plot_images([composite[i] for i in ['blue','red','green','rgb']], per_row=3, scalebar=[3,])
+
+.. figure::  images/color_overlay_all_channels.png
   :align:   center
   :width:   100%

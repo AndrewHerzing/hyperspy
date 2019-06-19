@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.backend_bases import key_press_handler
-from matplotlib.offsetbox import TextArea, VPacker, AnnotationBbox
 import warnings
 import numpy as np
 from distutils.version import LooseVersion
@@ -233,8 +232,7 @@ def subplot_parameters(fig):
 
 
 def merge_color_channels(im_list, color_list=None,
-                         normalization='single', plot=True,
-                         legend=None):
+                         normalization='single', return_all_channels=False):
     """
     Merge up to six gray scale images into a color composite.
 
@@ -248,20 +246,17 @@ def merge_color_channels(im_list, color_list=None,
         Either 'single' or 'global'; controls whether the color scales are
         normalized on a per-image basis (``'single'``), or globally over all
         images (``'global'``)
-    plot : bool
-        Controls plotting output. If True (default), the method will plot the
-        results of the merged images in addition to returning the merged RGB
-        matrix; if False, the method will silently return the RGB matrix
-        without plotting.
-    legend : None or list of str
-        Legend for each color to include in the plotted output. Should be one
-        string for each image in ``im_list``
+    return_all_channels : bool
+        If False, return just the RGB overlay signal.  If True, return a
+        a dictionary with the RGB overlay and each individual color channel.
+        Default is False.
 
     Returns
     -------
-    array: RGB matrix
-        A numpy array (same width and height as images) with three channels
-        containing the merged RGB data
+    array: Signal1D or Dictionary
+        A Signal1D containing the RGB overlay (return_all_channels is False, 
+        default behavior) or a dictionary with the RGB overlay and each 
+        individual color channel (if return_all_channels is True)
 
     """
     # TODO: Can itertools.cycle be used here to remove the 6 image limit?
@@ -284,7 +279,7 @@ def merge_color_channels(im_list, color_list=None,
         raise ValueError("All images must be the same shape to build "
                          "composite. Image shapes were: \n{}".format(shapes))
     height, width = shapes[0, :]
-
+    
     images = dict()
     images['rgb'] = np.zeros([height, width, 3])
     for i in color_list:
@@ -347,40 +342,30 @@ def merge_color_channels(im_list, color_list=None,
     # matplotlib warning
     for i in color_list:
         images['rgb'] += images[i]
-    images['rgb'] = np.int32(images['rgb'] * (255 / images['rgb'].max()))
+    
+    images['rgb'] = np.uint8(images['rgb'] * (255 / images['rgb'].max()))
+    images['rgb'] = hs.signals.Signal1D(images['rgb'])
+    images['rgb'].change_dtype("rgb8")
+    for i in range(0, 2):
+        images['rgb'].axes_manager[i].name = im_list[0].axes_manager[i].name
+        images['rgb'].axes_manager[i].offset = im_list[0].axes_manager[i].offset
+        images['rgb'].axes_manager[i].scale = im_list[0].axes_manager[i].scale
+        images['rgb'].axes_manager[i].units = im_list[0].axes_manager[i].units
 
-    if plot:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.frameon = False
-        ax.set_axis_off()
-        ax.imshow(images['rgb'], interpolation='nearest')
+    if return_all_channels:
+        for i in color_list:
+            images[i] = np.uint8(images[i] * (255 / images[i].max()))
+            images[i] = hs.signals.Signal1D(images[i])
+            images[i].change_dtype("rgb8")
 
-        if legend is not None:
-            # DONE: add a legend capability (as you'd have with elemental maps,
-            #  for instance)
-            # TODO: make legend placement more flexible for varying
-            # label length
-            if len(legend) != len(im_list):
-                raise ValueError("Number of legend labels (%s) is not the same "
-                                 "as the number of images (%s)"
-                                 % (len(legend), len(im_list)))
-            text = []
-            for l, c in zip(legend, color_list):
-                text.append(TextArea(l, textprops=dict(color=c)))
-            text_vbox = VPacker(children=text, pad=1, sep=5)
-            annotation = AnnotationBbox(text_vbox, (0.85, 0.1),
-                                        xycoords=ax.transAxes,
-                                        box_alignment=(0, 0),
-                                        bboxprops=dict(boxstyle='round',
-                                                       color='white'))
-            annotation.set_figure(fig)
-            fig.artists.append(annotation)
-
-        fig.canvas.draw_idle()
-        return fig, images
-    else:
+            for j in range(0, 2):
+                images[i].axes_manager[j].name = im_list[0].axes_manager[j].name
+                images[i].axes_manager[j].offset = im_list[0].axes_manager[j].offset
+                images[i].axes_manager[j].scale = im_list[0].axes_manager[j].scale
+                images[i].axes_manager[j].units = im_list[0].axes_manager[j].units
         return images
+    else:
+        return images['rgb']
 
 
 class ColorCycle:
